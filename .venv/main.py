@@ -109,7 +109,9 @@ async def save_chat(chat_data: ChatData):
         ########## 식당 선정 ##########
 
         # 식당 정보 가져오기
-        restaurant_ids = [10, 20, 30]  # ID 예시
+        restaurant_ids = []
+        ids = [10, 20, 30] # ID 예시
+        for id in ids: restaurant_ids.append(id)  # ID 예시
         format_strings = ",".join(["%s"] * len(restaurant_ids))
         cursor.execute(f"SELECT * FROM restaurants WHERE id IN ({format_strings})", restaurant_ids)
         restaurants = cursor.fetchall()
