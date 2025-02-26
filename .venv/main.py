@@ -33,14 +33,13 @@ class Restaurant(BaseModel):
 class ChatResponse(BaseModel):
     httpStatusCode: int
     message: str
-    data: Dict[str, int]  # chatID 포함
+    data: Optional[Dict[str, int]] = None
 
 # /chat/chatting 응답 모델
 class RestaurantResponse(BaseModel):
     httpStatusCode: int
     message: str
-    chat: Optional[str] = None
-    placeList: Optional[List[Restaurant]] = None
+    data: Optional[Dict[str, Union[str, List[Restaurant]]]] = None
 
 # 카테고리 데이터 모델
 class Category(BaseModel):
@@ -73,7 +72,7 @@ async def create_chat():
         response = ChatResponse(
             httpStatusCode=200,
             message="채팅방 개설에 성공하였습니다.",
-            data={"chatID": chat_id}  # data 필드 추가
+            data={"chatID": chat_id}
         )
         return response
 
@@ -84,7 +83,7 @@ async def create_chat():
             detail=ChatResponse(
                 httpStatusCode=500,
                 message="내부 서버 오류입니다.",
-                data={"chatID": -1}
+                data=""
             ).dict()
         )
 
@@ -107,21 +106,17 @@ async def save_chat(chat_data: ChatData):
         )
         conn.commit()
 
-        ##### 바로 윗줄에서 유저 정보 저장했습니다 #####
-        ##### 이 공간에서 식당 ID를 가져오면 될 것 같습니다 #####
+        ########## 식당 선정 ##########
 
         # 식당 정보 가져오기
-        restaurant_ids = []
-        ids = [10, 20, 30] # ID 예시
-        for id in ids: restaurant_ids.append(id)
+        restaurant_ids = [10, 20, 30]  # ID 예시
         format_strings = ",".join(["%s"] * len(restaurant_ids))
         cursor.execute(f"SELECT * FROM restaurants WHERE id IN ({format_strings})", restaurant_ids)
         restaurants = cursor.fetchall()
 
         # 식당 정보 나열
-        place_list = []
-        for restaurant in restaurants:
-            place_list.append(Restaurant(
+        place_list = [
+            Restaurant(
                 id=restaurant["id"],
                 name=restaurant["name"],
                 mainCategory=restaurant["ctg1"],
@@ -129,8 +124,9 @@ async def save_chat(chat_data: ChatData):
                 latitude=float(restaurant["latitude"]) if restaurant["latitude"] is not None else None,
                 longitude=float(restaurant["longitude"]) if restaurant["longitude"] is not None else None,
                 url=restaurant["kakao_link"],
-                menu=json.loads(restaurant["menu"]) if restaurant["menu"] else []  # JSON 문자열 → 리스트 변환
-            ))
+                menu=json.loads(restaurant["menu"]) if restaurant["menu"] else []
+            ) for restaurant in restaurants
+        ]
 
         cursor.close()
         conn.close()
@@ -138,8 +134,10 @@ async def save_chat(chat_data: ChatData):
         response = RestaurantResponse(
             httpStatusCode=200,
             message="채팅 값 전달드립니다.",
-            chat=chat_text if chat_text else "",
-            placeList=place_list if place_list else None
+            data={
+                "chat": chat_text if chat_text else "",
+                "placeList": place_list if place_list else None
+            }
         )
         return response
 
@@ -150,7 +148,6 @@ async def save_chat(chat_data: ChatData):
             detail=RestaurantResponse(
                 httpStatusCode=500,
                 message="내부 서버 오류입니다.",
-                chat="",
-                placeList=None
+                data=""
             ).dict()
         )
