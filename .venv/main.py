@@ -37,7 +37,7 @@ class Restaurant(BaseModel):
     latitude: Optional[float]  # 값이 NULL인 경우 발견 -> Optional 사용
     longitude: Optional[float]
     url: str
-    menu: List[Dict[str, str]]  # JSON 리스트 형태로 변환
+    menu: List[Dict[str, Union[str, int]]]  # JSON 리스트 형태로 변환
 
 # /chat 응답 모델
 class ChatResponse(BaseModel):
@@ -53,8 +53,8 @@ class RestaurantResponse(BaseModel):
 
 # 카테고리 데이터 모델
 class Category(BaseModel):
-    main: str
-    keywords: str
+    main: Optional[str] = None
+    keywords: Optional[str] = None
 
 # 채팅 데이터 요청 모델
 class ChatData(BaseModel):
@@ -136,7 +136,8 @@ async def save_chat(chat_data: ChatData):
                 latitude=float(restaurant["latitude"]) if restaurant["latitude"] is not None else None,
                 longitude=float(restaurant["longitude"]) if restaurant["longitude"] is not None else None,
                 url=restaurant["kakao_link"],
-                menu=json.loads(restaurant["menus"]) if restaurant["menus"] else []
+                menu=[{**item, "price": int(item["price"])} for item in json.loads(restaurant["menus"]) if
+                      restaurant["menus"]]
             ) for restaurant in restaurants
         ]
 
