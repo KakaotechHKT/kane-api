@@ -18,10 +18,10 @@ app.add_middleware(
 
 # DB 연결 설정 - 로컬
 db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "mysql",
-    "database": "hackathon_temp"
+    "host": "babpat-db.c5a0q02qmhx6.ap-northeast-2.rds.amazonaws.com",
+    "user": "babpat",
+    "password": "babpat1!",
+    "database": "babpat"
 }
 
 # DB 연결 함수
@@ -63,7 +63,7 @@ class ChatData(BaseModel):
     chat: Optional[str] = None
 
 # /chat - 새로운 채팅방 생성
-@app.get("/chat", response_model=ChatResponse, status_code=200)
+@app.post("/chat", response_model=ChatResponse, status_code=200)
 async def create_chat():
     try:
         conn = get_db_connection()
@@ -93,7 +93,7 @@ async def create_chat():
             detail=ChatResponse(
                 httpStatusCode=500,
                 message="내부 서버 오류입니다.",
-                data=""
+                data=None
             ).dict()
         )
 
@@ -123,20 +123,20 @@ async def save_chat(chat_data: ChatData):
         ids = [10, 20, 30] # ID 예시
         for id in ids: restaurant_ids.append(id)  # ID 예시
         format_strings = ",".join(["%s"] * len(restaurant_ids))
-        cursor.execute(f"SELECT * FROM restaurants WHERE id IN ({format_strings})", restaurant_ids)
+        cursor.execute(f"SELECT * FROM restaurant WHERE restaurant_id IN ({format_strings})", restaurant_ids)
         restaurants = cursor.fetchall()
 
         # 식당 정보 나열
         place_list = [
             Restaurant(
-                id=restaurant["id"],
+                id=restaurant["restaurant_id"],
                 name=restaurant["name"],
-                mainCategory=restaurant["ctg1"],
-                subCategory=restaurant["ctg2"],
+                mainCategory=restaurant["category1"],
+                subCategory=restaurant["category2"],
                 latitude=float(restaurant["latitude"]) if restaurant["latitude"] is not None else None,
                 longitude=float(restaurant["longitude"]) if restaurant["longitude"] is not None else None,
                 url=restaurant["kakao_link"],
-                menu=json.loads(restaurant["menu"]) if restaurant["menu"] else []
+                menu=json.loads(restaurant["menus"]) if restaurant["menus"] else []
             ) for restaurant in restaurants
         ]
 
@@ -160,6 +160,6 @@ async def save_chat(chat_data: ChatData):
             detail=RestaurantResponse(
                 httpStatusCode=500,
                 message="내부 서버 오류입니다.",
-                data=""
+                data=None
             ).dict()
         )
