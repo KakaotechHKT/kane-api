@@ -75,8 +75,8 @@ async def create_chat():
         restaurant_ids = []
 
         ##################################################
-        ##### 추천 식당 ID #####
-        suggest_restaurant_ids = []  # ID 예시
+        ##### 광고 식당 ID #####
+        suggest_restaurant_ids = []  # ID 입력
         ##################################################
 
         for id in suggest_restaurant_ids:
@@ -141,6 +141,12 @@ async def save_chat(chat_data: ChatData):
         ctg1 = chat_data.category.main if chat_data.category and chat_data.category.main else None
         ctg2 = chat_data.category.keywords if chat_data.category and chat_data.category.keywords else None
         chat_text = chat_data.chat if chat_data.chat else None
+        
+        ##################################################
+        ##### AI 모델 응답 - 채팅
+        ai_chat = "이곳에 AI 답변이 들어가면 될 것 같습니다"
+        chat_text = ai_chat
+        ##################################################
 
         # 채팅 데이터 저장
         cursor.execute(
@@ -148,9 +154,9 @@ async def save_chat(chat_data: ChatData):
             (chat_id, ctg1, ctg2, chat_text)
         )
         conn.commit()
-
+        
         ##################################################
-        ##### 식당 선정
+        ##### AI 모델 응답 - 추천 식당 리스트
         ##################################################
 
         # 식당 정보 가져오기
